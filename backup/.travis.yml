@@ -1,0 +1,35 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t ranjanra/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run ranjanra/react-test npm test -- --coverage
+after_success:
+  - docker build -t ranjanra/multi-client ./client
+  - docker build -t ranjanra/multi-nginx ./nginx
+  - docker build -t ranjanra/multi-server ./server
+  - docker build -t ranjanra/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_ID" --password-stdin
+  # take those images and put them to docker hub
+  - docker push ranjanra/multi-client
+  - docker push ranjanra/multi-nginx
+  - docker push ranjanra/multi-server
+  - docker push ranjanra/multi-worker
+  # Touching
+deploy:
+  provider: elasticbeanstalk
+  region: us-east-1
+  app: multi-docker
+  env: MultiDocker-env
+  bucket_name: elasticbeanstalk-us-east-1-817730592313
+  bucket_path: docker-multi
+  on:
+    branch: master
+  access_key_id: $AWS_ACCESS_KEY
+  secret_access_key:
+    secure: $AWS_SECRET_KEY
+        

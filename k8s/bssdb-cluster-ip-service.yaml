@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bssdb-cluster-ip-service
+spec:
+  type: ClusterIP
+  selector:
+    component: bssdb
+  ports:
+    - port: 3306
+      targetPort: 3306
